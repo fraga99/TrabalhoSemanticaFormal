@@ -50,6 +50,9 @@ exSigma = [ ("x", 10), ("temp",0), ("y",0)]
 exSigma2 :: Memoria
 exSigma2 = [("x",3),("y",0),("z",0)]
 
+exSigma3 :: Memoria
+exSigma3 = [("x",3),("y",2),("z",1)]
+
 
 
 
@@ -208,6 +211,38 @@ executaNTimes n c s =
     let (_,s1) = cbigStep (c,s)
     in executaNTimes (n-1) c s1
 
+
+---------------------------------
+-- Exemplos
+---------------------------------
+
+-- Exemplo usando Loop
+
+progLoop :: C
+progLoop = Loop (Num 1) (Num 5) (Atrib (Var "x") (Soma (Var "x") (Num 1)))
+
+
+-- Exemplo usando Dupla Atribuição
+
+progDupla :: C
+progDupla = DuplaATrib (Var "x") (Var "y") (Num 10) (Num 20)
+
+
+-- Exemplo usando Repeat Until
+
+progRepeat :: C
+progRepeat = Repeat (Atrib (Var "x") (Soma (Var "x") (Num 1))) (Igual (Var "x") (Num 5))
+
+-- Exemplo usando Swap
+
+progSwap :: C
+progSwap = Swap (Var "x") (Var "y")
+
+-- Exemplo AtribCond
+
+progAtribCond :: C
+progAtribCond = AtribCond (Leq (Var "x") (Num 10)) (Var "y") (Num 1) (Num 0)
+
 ---------------------------------
 -- Testes 
 ---------------------------------
@@ -241,34 +276,53 @@ executaNTimes n c s =
 -- cbigStep (progAtribCond, exSigma)
 
 
----------------------------------
--- Exemplos
----------------------------------
-
--- Exemplo usando Loop
-
-progLoop :: C
-progLoop = Loop (Num 1) (Num 5) (Atrib (Var "x") (Soma (Var "x") (Num 1)))
+------- Exeplos do professor
 
 
--- Exemplo usando Dupla Atribuição
+---
+--- O progExp1 é um programa que usa apenas a semântica das expressões aritméticas. Esse
+--- programa já é possível rodar com a implementação inicial  fornecida:
 
-progDupla :: C
-progDupla =
-    DuplaATrib (Var "x") (Var "y") (Num 10) (Num 20)
+progExp1 :: E
+progExp1 = Soma (Num 3) (Soma (Var "x") (Var "y"))
+
+---
+--- para rodar:
+-- *Main> ebigStep (progExp1, exSigma)
+-- 13
+-- *Main> ebigStep (progExp1, exSigma2)
+-- 6
+
+--- Para rodar os próximos programas é necessário primeiro implementar as regras da semântica
+---
+
+---
+--- Exemplos de expressões booleanas:
+
+teste1 :: B
+teste1 = (Leq (Soma (Num 3) (Num 3))  (Mult (Num 2) (Num 3)))
+
+-- bbigStep (teste1, exSigma)
+
+teste2 :: B
+teste2 = (Leq (Soma (Var "x") (Num 3))  (Mult (Num 2) (Num 3)))
+
+-- bbigStep (teste2, exSigma)
+
+---
+-- Exemplos de Programas Imperativos:
+
+testec1 :: C
+testec1 = (Seq (Seq (Atrib (Var "z") (Var "x")) (Atrib (Var "x") (Var "y"))) 
+               (Atrib (Var "y") (Var "z")))
+
+-- cbigStep (testec1, exSigma2) ou cbigStep (testec1, exSigma3)
+
+fatorial :: C
+fatorial = (Seq (Atrib (Var "y") (Num 1))
+                (While (Not (Igual (Var "x") (Num 1)))
+                       (Seq (Atrib (Var "y") (Mult (Var "y") (Var "x")))
+                            (Atrib (Var "x") (Sub (Var "x") (Num 1))))))
 
 
--- Exemplo usando Repeat Until
-
-progRepeat :: C
-progRepeat = Repeat (Atrib (Var "x") (Soma (Var "x") (Num 1))) (Igual (Var "x") (Num 5))
-
--- Exemplo usando Swap
-
-progSwap :: C
-progSwap = Swap (Var "x") (Var "y")
-
--- Exemplo AtribCond
-
-progAtribCond :: C
-progAtribCond = AtribCond (Leq (Var "x") (Num 10)) (Var "y") (Num 1) (Num 0)
+-- cbigStep (fatorial, exSigma)
