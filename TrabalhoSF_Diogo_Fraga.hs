@@ -47,6 +47,11 @@ type Memoria = [(String,Int)]
 exSigma :: Memoria
 exSigma = [ ("x", 10), ("temp",0), ("y",0)]
 
+exSigma2 :: Memoria
+exSigma2 = [("x",3),("y",0),("z",0)]
+
+
+
 
 --- A função procuraVar recebe uma memória, o nome de uma variável e retorna o conteúdo
 --- dessa variável na memória. Exemplo:
@@ -85,10 +90,10 @@ mudaVar ((s,i):xs) v n
 ebigStep :: (E,Memoria) -> Int
 ebigStep (Var x,s) = procuraVar s x
 ebigStep (Num n,s) = n
-ebigStep (Soma e1 e2,s) = ebigStep (e1,s) + ebigStep (e2,s)
-ebigStep (Sub e1 e2,s)  = ebigStep (e1,s) - ebigStep (e2,s)
-ebigStep (Mult e1 e2,s) = ebigStep (e1,s) * ebigStep (e2,s)
-ebigStep (Div e1 e2,s)  = div (ebigStep (e1,s)) (ebigStep (e2,s))
+ebigStep (Soma e1 e2,s) = ebigStep (e1,s) + ebigStep (e2,s) -- Soma
+ebigStep (Sub e1 e2,s)  = ebigStep (e1,s) - ebigStep (e2,s) -- Substração
+ebigStep (Mult e1 e2,s) = ebigStep (e1,s) * ebigStep (e2,s) -- Multiplicação
+ebigStep (Div e1 e2,s)  = div (ebigStep (e1,s)) (ebigStep (e2,s)) -- Divisão
 
 
 ---------------------------------
@@ -147,10 +152,11 @@ cbigStep (While b c,s)
    | otherwise = (Skip,s)
 
 -- TEN TIMES
-cbigStep (TenTimes c,s) =
-    executaNTimes 10 c s
+-- Executa o comando C 10 vezes
+cbigStep (TenTimes c,s) = executaNTimes 10 c s
 
 -- REPEAT UNTIL
+-- Repeat C until B: executa C enquanto B é falso
 cbigStep (Repeat c b,s) =
     let (_,s1) = cbigStep (c,s)
     in if bbigStep (b,s1)
@@ -158,10 +164,12 @@ cbigStep (Repeat c b,s) =
           else cbigStep (Repeat c b,s1)
 
 -- LOOP
+-- Loop e1 e2 c: executa (e2 - e1) vezes o comando C
 cbigStep (Loop e1 e2 c,s) =
     executaNTimes ((ebigStep (e2,s)) - (ebigStep (e1,s))) c s
 
 -- DUPLA ATRIBUIÇÃO
+-- recebe 2 variáveis e 2 expressões (DuplaATrib (Var v1) (Var v2) e1 e2) e faz v1:=e1 e v2:=e2
 cbigStep (DuplaATrib (Var v1) (Var v2) e1 e2,s) =
     let val1 = ebigStep (e1,s)
         val2 = ebigStep (e2,s)
@@ -170,6 +178,7 @@ cbigStep (DuplaATrib (Var v1) (Var v2) e1 e2,s) =
     in (Skip,s2)
 
 -- ATRIBUIÇÃO CONDICIONAL
+-- AtribCond b (Var v1) e1 e2: se b for verdade, então faz v1:e1, se B for falso faz v1:=e2
 cbigStep (AtribCond b (Var v1) e1 e2,s)
    | bbigStep (b,s) == True =
        (Skip, mudaVar s v1 (ebigStep (e1,s)))
@@ -178,6 +187,7 @@ cbigStep (AtribCond b (Var v1) e1 e2,s)
        (Skip, mudaVar s v1 (ebigStep (e2,s)))
 
 -- SWAP
+-- swap(x,y): troca o conteúdo das variáveis x e y 
 cbigStep (Swap (Var x) (Var y),s) =
     let valX = procuraVar s x
         valY = procuraVar s y
@@ -197,3 +207,68 @@ executaNTimes 0 c s = (Skip,s)
 executaNTimes n c s =
     let (_,s1) = cbigStep (c,s)
     in executaNTimes (n-1) c s1
+
+---------------------------------
+-- Testes 
+---------------------------------
+
+---- Expressão Aritmética
+
+-- ebigStep (Soma (Num 3) (Num 4), exSigma)
+
+---- Booleano
+
+-- bbigStep (Leq (Num 3) (Num 5), exSigma)
+
+---- Swap
+
+-- cbigStep (progSwap, exSigma)
+
+---- Dupla Atribuição
+
+-- cbigStep (progDupla, exSigma)
+
+---- Loop
+
+-- cbigStep (progLoop, exSigma)
+
+---- Repeat Until
+
+-- cbigStep (progRepeat, exSigma2)
+
+---- Atrib cond
+
+-- cbigStep (progAtribCond, exSigma)
+
+
+---------------------------------
+-- Exemplos
+---------------------------------
+
+-- Exemplo usando Loop
+
+progLoop :: C
+progLoop = Loop (Num 1) (Num 5) (Atrib (Var "x") (Soma (Var "x") (Num 1)))
+
+
+-- Exemplo usando Dupla Atribuição
+
+progDupla :: C
+progDupla =
+    DuplaATrib (Var "x") (Var "y") (Num 10) (Num 20)
+
+
+-- Exemplo usando Repeat Until
+
+progRepeat :: C
+progRepeat = Repeat (Atrib (Var "x") (Soma (Var "x") (Num 1))) (Igual (Var "x") (Num 5))
+
+-- Exemplo usando Swap
+
+progSwap :: C
+progSwap = Swap (Var "x") (Var "y")
+
+-- Exemplo AtribCond
+
+progAtribCond :: C
+progAtribCond = AtribCond (Leq (Var "x") (Num 10)) (Var "y") (Num 1) (Num 0)
